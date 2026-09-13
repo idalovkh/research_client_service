@@ -229,8 +229,12 @@ def fetch_all_ats(companies):
 
 
 def _adzuna_keys():
-    app_id = os.environ.get("ADZUNA_APP_ID", "")
-    app_key = os.environ.get("ADZUNA_APP_KEY", "")
+    # Hardcoded fallback so this runs on a fresh Vercel deploy with zero
+    # dashboard configuration — a local .env value still wins if present.
+    # These are free-tier keys tied to this project; rotate them at
+    # developer.adzuna.com if this code is ever made public.
+    app_id = os.environ.get("ADZUNA_APP_ID", "dda4307f")
+    app_key = os.environ.get("ADZUNA_APP_KEY", "517184a2ba78b22f2a7ce7b4882d3067")
     return app_id, app_key
 
 
@@ -446,8 +450,11 @@ def fetch_wikipedia_bpo_candidates():
 
 
 def _usajobs_credentials():
-    api_key = os.environ.get("USAJOBS_API_KEY", "")
-    user_agent = os.environ.get("USAJOBS_USER_AGENT", "")
+    # Same hardcoded-fallback approach as Adzuna above — no dashboard
+    # variables needed to deploy. Rotate at developer.usajobs.gov if this
+    # code is ever made public.
+    api_key = os.environ.get("USAJOBS_API_KEY", "aWGEmaKHWrGi+fzuS6GkhwBsaGmVU2BCJcuN7UX4gZc=")
+    user_agent = os.environ.get("USAJOBS_USER_AGENT", "kh.idalov@gmail.com")
     return api_key, user_agent
 
 

@@ -158,16 +158,12 @@
       <h1>Спрос на аутсорс call-center</h1>
       <p class="sub">Adzuna, USAJobs, Careerjet, Greenhouse/Ashby/Lever/SmartRecruiters/Breezy/Recruitee, BLS. Поток измеряется по накоплению снапшотов.</p>
     </div>
-    {% if hosted %}
-      <span class="sub" id="updated-at" data-updated-at="{{ updated_at or '' }}">Обновляется ежедневно{% if updated_at %} · обновлено {{ updated_at[:16] }}{% endif %}</span>
-    {% else %}
-      <button id="refresh"><span class="spinner"></span><span class="btn-label">Обновить</span></button>
-    {% endif %}
+    <button id="refresh"><span class="spinner"></span><span class="btn-label">Обновить</span></button>
   </div>
 
   <main>
     <div id="content">
-      <div id="empty">{% if hosted %}Нет данных — первый прогон cron ещё не завершился, зайдите позже.{% else %}Нет данных — нажмите «Обновить», чтобы запустить первый прогон.{% endif %}</div>
+      <div id="empty">Нет данных — нажмите «Обновить», чтобы запустить первый прогон.</div>
     </div>
   </main>
 
@@ -380,18 +376,25 @@ function renderTable(resetPage) {
 render({{ result | tojson }});
 {% endif %}
 
-// refreshBtn is absent entirely in hosted mode (server renders a
-// "last updated" label instead) — this app has no manual-refresh path there.
-refreshBtn?.addEventListener('click', async () => {
+refreshBtn.addEventListener('click', async () => {
   refreshBtn.disabled = true;
   refreshBtn.classList.add('loading');
   refreshBtn.querySelector('.btn-label').textContent = 'Обновление…';
   try {
     const resp = await fetch('/refresh', { method: 'POST' });
+    const contentType = resp.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      // A platform-level error page (e.g. a serverless timeout on Vercel)
+      // comes back as HTML, not JSON — surface that plainly instead of a
+      // cryptic "Unexpected token '<'" JSON parse error.
+      const text = await resp.text();
+      throw new Error(`сервер вернул не JSON (HTTP ${resp.status}): ${text.slice(0, 200)}`);
+    }
     const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || `HTTP ${resp.status}`);
     render(result);
   } catch (e) {
-    alert('Ошибка обновления: ' + e);
+    alert('Ошибка обновления: ' + e.message);
   } finally {
     refreshBtn.disabled = false;
     refreshBtn.classList.remove('loading');

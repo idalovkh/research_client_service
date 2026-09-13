@@ -6,8 +6,5 @@
   },
   "routes": [
     { "src": "/(.*)", "dest": "api/index.py" }
-  ],
-  "crons": [
-    { "path": "/refresh", "schedule": "0 6 * * *" }
   ]
 }
