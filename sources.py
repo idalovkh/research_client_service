@@ -233,8 +233,11 @@ def _adzuna_keys():
     # dashboard configuration — a local .env value still wins if present.
     # These are free-tier keys tied to this project; rotate them at
     # developer.adzuna.com if this code is ever made public.
-    app_id = os.environ.get("ADZUNA_APP_ID", "dda4307f")
-    app_key = os.environ.get("ADZUNA_APP_KEY", "517184a2ba78b22f2a7ce7b4882d3067")
+    # `... or default`, not `.get(key, default)` — an env var that exists
+    # but is set to "" (e.g. left blank in a dashboard) makes .get() return
+    # that empty string, not the default; `or` catches that case too.
+    app_id = os.environ.get("ADZUNA_APP_ID") or "dda4307f"
+    app_key = os.environ.get("ADZUNA_APP_KEY") or "517184a2ba78b22f2a7ce7b4882d3067"
     return app_id, app_key
 
 
@@ -453,8 +456,8 @@ def _usajobs_credentials():
     # Same hardcoded-fallback approach as Adzuna above — no dashboard
     # variables needed to deploy. Rotate at developer.usajobs.gov if this
     # code is ever made public.
-    api_key = os.environ.get("USAJOBS_API_KEY", "aWGEmaKHWrGi+fzuS6GkhwBsaGmVU2BCJcuN7UX4gZc=")
-    user_agent = os.environ.get("USAJOBS_USER_AGENT", "kh.idalov@gmail.com")
+    api_key = os.environ.get("USAJOBS_API_KEY") or "aWGEmaKHWrGi+fzuS6GkhwBsaGmVU2BCJcuN7UX4gZc="
+    user_agent = os.environ.get("USAJOBS_USER_AGENT") or "kh.idalov@gmail.com"
     return api_key, user_agent
 
 
@@ -482,10 +485,12 @@ def _usajobs_annual_salary(remuneration):
 
 
 def fetch_usajobs(what):
-    """Federal government postings. Returns (jobs, status)."""
+    """Federal government postings. Returns (jobs, total_count, status) —
+    matches fetch_usajobs_multi's unpacking; a 2-tuple here would raise
+    ValueError there regardless of which branch returns it."""
     api_key, user_agent = _usajobs_credentials()
     if not api_key or not user_agent:
-        return [], "no_key"
+        return [], 0, "no_key"
 
     url = "https://data.usajobs.gov/api/search"
     headers = {
