@@ -78,8 +78,15 @@ def append_snapshot(jobs, bucket_by_job_id):
 
     first_seen is preserved for jobs already known; new jobs get first_seen=now.
     Returns (new_count, total_rows_written_this_run).
+
+    On Vercel the deployed filesystem is read-only (only /tmp is writable,
+    and that doesn't survive between invocations anyway, so it wouldn't
+    help dedup/history even if used) — writing here raises OSError. That's
+    a known, accepted limitation of running this without a real database,
+    not something to crash the whole request over: catch it and return as
+    if every job were new, so /refresh still succeeds and hands back a
+    result, just without persisted dedup on that platform.
     """
-    os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
     existing = _load_existing()
     run_at = _now_iso()
     new_count = 0
@@ -106,9 +113,13 @@ def append_snapshot(jobs, bucket_by_job_id):
             "first_seen": first_seen,
         })
 
-    with open(DATA_PATH, "a", encoding="utf-8") as f:
-        for row in rows:
-            f.write(json.dumps(row) + "\n")
+    try:
+        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
+        with open(DATA_PATH, "a", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row) + "\n")
+    except OSError:
+        pass
 
     return new_count, len(rows)
 
