@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.py" }
+  ],
+  "crons": [
+    { "path": "/refresh", "schedule": "0 6 * * *" }
+  ]
+}

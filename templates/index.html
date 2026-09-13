@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Спрос на аутсорс call-center</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #e3e5e9;
+    --text: #16181d;
+    --text-muted: #6b7280;
+    --accent: #16181d;
+    --accent-text: #ffffff;
+    --link: #1a5ecf;
+    --ok-bg: #e3f7e3; --ok-text: #157a15;
+    --warn-bg: #fff3d6; --warn-text: #8a6300;
+    --error-bg: #fbe3e3; --error-text: #a11a1a;
+    --row-alt: #fafafa;
+    --bpo-tint: #fff9ec;
+    --bpo-border: #e8b93a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181d; --surface: #1e2128; --border: #2c303a;
+      --text: #e7e9ee; --text-muted: #9aa1ac;
+      --accent: #e7e9ee; --accent-text: #16181d;
+      --link: #6ea8ff;
+      --ok-bg: #16321c; --ok-text: #6fd97f;
+      --warn-bg: #3a2f10; --warn-text: #e3b94a;
+      --error-bg: #3a1a1a; --error-text: #ff8f8f;
+      --row-alt: #22252c; --bpo-tint: #2a2612; --bpo-border: #8a6d1c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181d; --surface: #1e2128; --border: #2c303a;
+    --text: #e7e9ee; --text-muted: #9aa1ac;
+    --accent: #e7e9ee; --accent-text: #16181d;
+    --link: #6ea8ff;
+    --ok-bg: #16321c; --ok-text: #6fd97f;
+    --warn-bg: #3a2f10; --warn-text: #e3b94a;
+    --error-bg: #3a1a1a; --error-text: #ff8f8f;
+    --row-alt: #22252c; --bpo-tint: #2a2612; --bpo-border: #8a6d1c;
+  }
+
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+  a { color: var(--link); }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 14px 24px; background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-size: 17px; margin: 0; }
+  .topbar .sub { color: var(--text-muted); margin: 2px 0 0; font-size: 12.5px; }
+
+  main { padding: 20px 24px 40px; max-width: 1100px; margin: 0 auto; }
+
+  button#refresh {
+    background: var(--accent); color: var(--accent-text); border: none;
+    border-radius: 7px; padding: 9px 18px; font-size: 13.5px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
+  }
+  button#refresh:disabled { opacity: 0.6; cursor: default; }
+  .spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid transparent; border-top-color: currentColor; border-right-color: currentColor;
+    animation: spin 0.7s linear infinite; display: none;
+  }
+  button#refresh.loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .section { margin: 22px 0; }
+  .section-title {
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted); margin: 0 0 10px;
+  }
+
+  .cards { display: flex; flex-wrap: wrap; gap: 10px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; min-width: 148px; flex: 1 1 148px;
+  }
+  .card .label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.01em; line-height: 1.3; }
+  .card .value { font-size: 21px; font-weight: 650; margin-top: 5px; }
+
+  details.statuses {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px;
+  }
+  details.statuses summary {
+    cursor: pointer; font-size: 13px; color: var(--text-muted); list-style: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  details.statuses summary::-webkit-details-marker { display: none; }
+  details.statuses summary::before { content: '▸'; font-size: 11px; }
+  details.statuses[open] summary::before { content: '▾'; }
+  .status-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .status { font-size: 11.5px; padding: 3px 8px; border-radius: 5px; }
+  .status.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .status.error { background: var(--error-bg); color: var(--error-text); }
+  .status.no_key { background: var(--warn-bg); color: var(--warn-text); }
+  .pill-count { font-size: 12px; padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+  .pill-count.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .pill-count.bad { background: var(--error-bg); color: var(--error-text); }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 0;
+  }
+  .tabs { display: flex; gap: 6px; }
+  .tabs button {
+    padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); cursor: pointer; font-size: 13px;
+  }
+  .tabs button.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .toolbar label { font-size: 13px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .toolbar select {
+    padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 13px;
+  }
+  .toolbar .spacer { flex: 1; }
+
+  .table-wrap {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: auto; margin-top: 12px; max-height: 70vh;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; white-space: nowrap; }
+  td:nth-child(2) { white-space: normal; min-width: 220px; }
+  th {
+    position: sticky; top: 0; background: var(--surface); color: var(--text-muted);
+    font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.02em;
+    border-bottom: 1px solid var(--border); z-index: 1;
+  }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr.is-bpo { background: var(--bpo-tint); box-shadow: inset 3px 0 0 var(--bpo-border); }
+  tbody tr:hover { filter: brightness(0.97); }
+  :root:not([data-theme="light"]) tbody tr:hover { filter: brightness(1.15); }
+
+  .pagination { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+  .pagination button {
+    padding: 5px 12px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+
+  #empty { color: var(--text-muted); padding: 60px 0; text-align: center; font-size: 14px; }
+  .flow-note { color: var(--text-muted); font-size: 12.5px; margin: 10px 0 0; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>Спрос на аутсорс call-center</h1>
+      <p class="sub">Adzuna, USAJobs, Careerjet, Greenhouse/Ashby/Lever/SmartRecruiters/Breezy/Recruitee, BLS. Поток измеряется по накоплению снапшотов.</p>
+    </div>
+    {% if hosted %}
+      <span class="sub" id="updated-at" data-updated-at="{{ updated_at or '' }}">Обновляется ежедневно{% if updated_at %} · обновлено {{ updated_at[:16] }}{% endif %}</span>
+    {% else %}
+      <button id="refresh"><span class="spinner"></span><span class="btn-label">Обновить</span></button>
+    {% endif %}
+  </div>
+
+  <main>
+    <div id="content">
+      <div id="empty">{% if hosted %}Нет данных — первый прогон cron ещё не завершился, зайдите позже.{% else %}Нет данных — нажмите «Обновить», чтобы запустить первый прогон.{% endif %}</div>
+    </div>
+  </main>
+
+<script>
+const refreshBtn = document.getElementById('refresh');
+const content = document.getElementById('content');
+
+const BUCKET_LABELS = { frontline: 'Линия поддержки', adjacent: 'Смежные', excluded: 'Исключено' };
+const CHANNEL_LABELS = { phone: 'Телефон', chat: 'Чат', unspecified: '—' };
+const COUNTRY_NAMES = { us: 'США', gb: 'Великобритания', ca: 'Канада', au: 'Австралия', de: 'Германия', nl: 'Нидерланды' };
+
+function statusLabel(status) {
+  if (status === 'ok') return 'работает';
+  if (status === 'no_key') return 'нет ключа';
+  if (status.startsWith('error')) return 'ошибка' + status.slice('error'.length);
+  return status;
+}
+
+function statusClass(s) {
+  if (s === 'ok') return 'ok';
+  if (s === 'no_key') return 'no_key';
+  return 'error';
+}
+
+function fmt(n) {
+  return typeof n === 'number' ? n.toLocaleString('ru-RU') : (n ?? '—');
+}
+
+function cardSection(title, entries) {
+  const cards = entries.map(([label, value]) =>
+    `<div class="card"><div class="label">${label}</div><div class="value">${value}</div></div>`
+  ).join('');
+  return `<div class="section"><div class="section-title">${title}</div><div class="cards">${cards}</div></div>`;
+}
+
+function render(result) {
+  const bls = result.bls_stats || {};
+
+  let html = '';
+
+  html += cardSection('Размер рынка (США, «customer service»)', [
+    ['Adzuna', fmt(result.adzuna_market_size?.['customer service']?.us)],
+    ['USAJobs (гос.)', fmt(result.usajobs_market_size?.['customer service'])],
+    ['Careerjet', fmt(result.careerjet_market_size?.['customer service'])],
+    ['Занято в США (BLS)', fmt(bls.employment)],
+    ['Медианная ЗП, BLS/год', fmt(bls.annual_median_wage)],
+  ]);
+
+  html += cardSection('Классификация вакансий', [
+    [BUCKET_LABELS.frontline, result.bucket_counts.frontline],
+    [BUCKET_LABELS.adjacent, result.bucket_counts.adjacent],
+    [BUCKET_LABELS.excluded, result.bucket_counts.excluded],
+    ['Компаний', result.companies_seen.length],
+  ]);
+
+  html += cardSection('Линия поддержки — разбивка', [
+    ['Телефон', result.phone_frontline_count ?? 0],
+    ['Чат', result.chat_frontline_count ?? 0],
+    ['Удалённо', result.remote_frontline_count ?? 0],
+    ['BPO-вендоры', result.bpo_frontline_count ?? 0],
+    ['Медиана ЗП вакансий', fmt(result.median_salary)],
+  ]);
+
+  html += cardSection('Служебное', [
+    ['Новых за прогон', result.new_count],
+    ['Дублей убрано', result.cross_source_dupes_removed ?? 0],
+  ]);
+
+  html += result.history_days < 7
+    ? `<p class="flow-note">Накоплено ${result.history_days} дн. истории — оценка потока станет надёжной через 7 дней.</p>`
+    : `<p class="flow-note">Новых вакансий за последние 7 дней: <strong>${result.flow_7d}</strong></p>`;
+
+  const statusEntries = Object.entries(result.source_statuses).sort();
+  const failed = statusEntries.filter(([, s]) => s !== 'ok');
+  html += `
+    <div class="section">
+      <details class="statuses">
+        <summary>
+          Источники —
+          <span class="pill-count ok">${statusEntries.length - failed.length} ok</span>
+          ${failed.length ? `<span class="pill-count bad">${failed.length} не ok</span>` : ''}
+        </summary>
+        <div class="status-grid">
+          ${statusEntries.map(([name, status]) =>
+            `<span class="status ${statusClass(status)}">${name}: ${statusLabel(status)}</span>`
+          ).join('')}
+        </div>
+      </details>
+    </div>
+  `;
+
+  html += `
+    <div class="section">
+      <div class="toolbar">
+        <div class="tabs">
+          <button data-bucket="frontline" class="active">${BUCKET_LABELS.frontline}</button>
+          <button data-bucket="adjacent">${BUCKET_LABELS.adjacent}</button>
+          <button data-bucket="excluded">${BUCKET_LABELS.excluded}</button>
+        </div>
+        <label><input type="checkbox" id="remote-only"> только удалённые</label>
+        <label><input type="checkbox" id="bpo-only"> только BPO-вендоры</label>
+        <label>Канал:
+          <select id="channel-filter">
+            <option value="">Все</option>
+            <option value="phone">Телефон</option>
+            <option value="chat">Чат</option>
+          </select>
+        </label>
+        <label>Страна:
+          <select id="country-filter">
+            <option value="">Все</option>
+            ${Object.entries(COUNTRY_NAMES).map(([code, name]) => `<option value="${code}">${name}</option>`).join('')}
+            <option value="none">Без указания</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table id="jobs-table">
+          <thead><tr><th>Компания</th><th>Заголовок</th><th>Локация</th><th>Страна</th><th>Канал</th><th>Удалённо</th><th>BPO</th><th>Источник</th><th>Дата</th><th>Ссылка</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="prev-page">« Назад</button>
+        <span id="page-info"></span>
+        <button id="next-page">Вперёд »</button>
+      </div>
+    </div>
+  `;
+
+  content.innerHTML = html;
+  content.dataset.jobs = JSON.stringify(result.jobs);
+  content.dataset.bucket = 'frontline';
+  content.dataset.page = '0';
+  renderTable(true);
+
+  content.querySelectorAll('.tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      content.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      content.dataset.bucket = btn.dataset.bucket;
+      renderTable(true);
+    });
+  });
+
+  content.querySelector('#remote-only').addEventListener('change', () => renderTable(true));
+  content.querySelector('#bpo-only').addEventListener('change', () => renderTable(true));
+  content.querySelector('#channel-filter').addEventListener('change', () => renderTable(true));
+  content.querySelector('#country-filter').addEventListener('change', () => renderTable(true));
+  content.querySelector('#prev-page').addEventListener('click', () => {
+    content.dataset.page = String(parseInt(content.dataset.page || '0', 10) - 1);
+    renderTable(false);
+  });
+  content.querySelector('#next-page').addEventListener('click', () => {
+    content.dataset.page = String(parseInt(content.dataset.page || '0', 10) + 1);
+    renderTable(false);
+  });
+}
+
+const PAGE_SIZE = 50;
+
+function renderTable(resetPage) {
+  const jobs = JSON.parse(content.dataset.jobs || '[]');
+  const bucket = content.dataset.bucket || 'frontline';
+  const remoteOnly = content.querySelector('#remote-only')?.checked;
+  const bpoOnly = content.querySelector('#bpo-only')?.checked;
+  const channelFilter = content.querySelector('#channel-filter')?.value;
+  const countryFilter = content.querySelector('#country-filter')?.value;
+  const tbody = content.querySelector('#jobs-table tbody');
+
+  let filtered = jobs.filter(j => j.bucket === bucket);
+  if (remoteOnly) filtered = filtered.filter(j => j.is_remote);
+  if (bpoOnly) filtered = filtered.filter(j => j.is_bpo_vendor);
+  if (channelFilter) filtered = filtered.filter(j => j.channel === channelFilter);
+  if (countryFilter === 'none') filtered = filtered.filter(j => !j.country);
+  else if (countryFilter) filtered = filtered.filter(j => j.country === countryFilter);
+  filtered.sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''));
+
+  if (resetPage) content.dataset.page = '0';
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  let page = parseInt(content.dataset.page || '0', 10);
+  page = Math.min(Math.max(page, 0), totalPages - 1);
+  content.dataset.page = String(page);
+
+  const pageItems = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  tbody.innerHTML = pageItems.map(j => `
+    <tr class="${j.is_bpo_vendor ? 'is-bpo' : ''}">
+      <td>${j.company || ''}</td>
+      <td>${j.title || ''}</td>
+      <td>${j.location || ''}</td>
+      <td>${COUNTRY_NAMES[j.country] || '—'}</td>
+      <td>${CHANNEL_LABELS[j.channel] || '—'}</td>
+      <td>${j.is_remote ? '✓' : '—'}</td>
+      <td>${j.is_bpo_vendor ? '✓' : '—'}</td>
+      <td>${j.source || ''}</td>
+      <td>${(j.posted_at || '').slice(0, 10)}</td>
+      <td>${j.url ? `<a href="${j.url}" target="_blank" rel="noopener">открыть</a>` : ''}</td>
+    </tr>
+  `).join('');
+
+  const pageInfo = content.querySelector('#page-info');
+  if (pageInfo) pageInfo.textContent = `Стр. ${page + 1} из ${totalPages} (${filtered.length} вакансий)`;
+  const prevBtn = content.querySelector('#prev-page');
+  const nextBtn = content.querySelector('#next-page');
+  if (prevBtn) prevBtn.disabled = page === 0;
+  if (nextBtn) nextBtn.disabled = page >= totalPages - 1;
+}
+
+{% if result %}
+render({{ result | tojson }});
+{% endif %}
+
+// refreshBtn is absent entirely in hosted mode (server renders a
+// "last updated" label instead) — this app has no manual-refresh path there.
+refreshBtn?.addEventListener('click', async () => {
+  refreshBtn.disabled = true;
+  refreshBtn.classList.add('loading');
+  refreshBtn.querySelector('.btn-label').textContent = 'Обновление…';
+  try {
+    const resp = await fetch('/refresh', { method: 'POST' });
+    const result = await resp.json();
+    render(result);
+  } catch (e) {
+    alert('Ошибка обновления: ' + e);
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove('loading');
+    refreshBtn.querySelector('.btn-label').textContent = 'Обновить';
+  }
+});
+</script>
+</body>
+</html>

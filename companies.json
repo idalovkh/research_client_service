@@ -1,0 +1,55 @@
+{
+  "greenhouse": [
+    "stripe",
+    "airbnb",
+    "twilio",
+    "coinbase",
+    "robinhood",
+    "brex",
+    "lyft",
+    "webflow",
+    "figma",
+    "instacart",
+    "affirm",
+    "chime",
+    "carvana",
+    "flexport",
+    "gusto",
+    "justworks",
+    "upstart",
+    "faire",
+    "sofi",
+    "zocdoc",
+    "stockx",
+    "glossier",
+    "betterment"
+  ],
+  "ashby": [
+    "ramp",
+    "openai",
+    "linear",
+    "notion",
+    "vanta",
+    "sardine",
+    "lemonade",
+    "substack"
+  ],
+  "lever": [
+    "ro"
+  ],
+  "smartrecruiters": [
+    "Grab",
+    "Equinox",
+    "Wise",
+    "Fiverr"
+  ],
+  "breezy": [
+    "helpware-inc",
+    "sourcefit",
+    "there-is-talent",
+    "weassist-io"
+  ],
+  "recruitee": [
+    "vandebron"
+  ]
+}
